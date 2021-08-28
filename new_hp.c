@@ -13,6 +13,8 @@
 
 #define NEW_LIST_ENTRY_EVENT 3
 #define NEW_LIST_ENTRY_INPUT 4
+#define NEW_LIST_DELETE_EVENT 5
+
 
 hipe_session session;
 
@@ -33,8 +35,22 @@ void newListEntryInput(hipe_session session) {
     hipe_instruction_init(&listenForInput);
     
     if(hipe_await_instruction(session, &listenForInput, HIPE_OP_DIALOG_RETURN) == 1) {
-        hipe_send(session, HIPE_OP_APPEND_TAG, 0,0, 1, "hr");
-        hipe_send(session, HIPE_OP_APPEND_TEXT, 0,0, 2, listenForInput.arg[0]);
+        // div
+        hipe_send(session, HIPE_OP_APPEND_TAG, 0,0, 2, "div", "entryDiv");
+        hipe_loc newListEntryDialogButtonDivLoc = getLoc("entryDiv");
+
+        hipe_send(session, HIPE_OP_APPEND_TAG, 0,newListEntryDialogButtonDivLoc, 1, "hr");
+        hipe_send(session, HIPE_OP_APPEND_TEXT, 0,newListEntryDialogButtonDivLoc, 2, listenForInput.arg[0]);
+        hipe_send(session, HIPE_OP_APPEND_TAG, 0,newListEntryDialogButtonDivLoc, 2, "button", "deleteEntryButton");
+
+        hipe_loc deleteButton = getLoc("deleteEntryButton");
+
+        //add text to the buttons
+        hipe_send(session, HIPE_OP_APPEND_TEXT, 0,deleteButton, 1, "Delete entry");
+
+        //requests events for these buttons (we designate requestor codes 1,2,3 to identify these quickly)
+        hipe_send(session, HIPE_OP_EVENT_REQUEST, NEW_LIST_DELETE_EVENT, deleteButton, 1, "click");
+
     }
 }
 
@@ -56,6 +72,11 @@ int main(int argc, char** argv)
     hipe_send(session, HIPE_OP_APPEND_TAG, 0,0, 2, "div", "newListEntryDialogButtonDiv");
     hipe_loc newListEntryDialogButtonDivLoc = getLoc("newListEntryDialogButtonDiv");
     hipe_send(session, HIPE_OP_APPEND_TAG, 0,newListEntryDialogButtonDivLoc, 2, "button", "newListEntryDialogButton");
+
+
+    // hipe_send(session, HIPE_OP_APPEND_TAG, 0,0, 2, "div", "newListEntryDialogButtonDiv2");
+    // hipe_loc newListEntryDialogButtonDivLoc2 = getLoc("newListEntryDialogButtonDiv2");
+    // hipe_send(session, HIPE_OP_APPEND_TAG, 0,newListEntryDialogButtonDivLoc2, 2, "button", "newListEntryDeleteButton");
     
     hipe_send(session, HIPE_OP_ADD_STYLE_RULE, 0,0, 2, "h1", "text-align:center"); 
     
@@ -83,6 +104,18 @@ int main(int argc, char** argv)
                 newListEntryInput(session);
                 break;
             }
+
+            case NEW_LIST_DELETE_EVENT:
+                    {
+                        hipe_loc deleteLocButton = getLoc("entryDiv");
+                        hipe_send(session, HIPE_OP_DELETE, 0, deleteLocButton, 2, "button", "deletedeleteButton");
+
+                        // no idea how to find the location of the text itself???
+                        // hipe_loc textLoc = getLoc("hr");
+                        // hipe_send(session, HIPE_OP_DELETE, 0, textLoc, 2, "text", "deletetext");
+                        break;
+                    }
+
         }
     } while(event.opcode != HIPE_OP_FRAME_CLOSE); //repeat until window closed.
 
