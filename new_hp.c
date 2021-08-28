@@ -37,11 +37,11 @@ void newListEntryInput(hipe_session session) {
     if(hipe_await_instruction(session, &listenForInput, HIPE_OP_DIALOG_RETURN) == 1) {
         // div
         hipe_send(session, HIPE_OP_APPEND_TAG, 0,0, 2, "div", "entryDiv");
-        hipe_loc newListEntryDialogButtonDivLoc = getLoc("entryDiv");
+        hipe_loc entryDivLoc = getLoc("entryDiv");
 
-        hipe_send(session, HIPE_OP_APPEND_TAG, 0,newListEntryDialogButtonDivLoc, 1, "hr");
-        hipe_send(session, HIPE_OP_APPEND_TEXT, 0,newListEntryDialogButtonDivLoc, 2, listenForInput.arg[0]);
-        hipe_send(session, HIPE_OP_APPEND_TAG, 0,newListEntryDialogButtonDivLoc, 2, "button", "deleteEntryButton");
+        hipe_send(session, HIPE_OP_APPEND_TAG, 0,entryDivLoc, 1, "hr");
+        hipe_send(session, HIPE_OP_APPEND_TEXT, 0,entryDivLoc, 2, listenForInput.arg[0]);
+        hipe_send(session, HIPE_OP_APPEND_TAG, 0,entryDivLoc, 2, "button", "deleteEntryButton");
 
         hipe_loc deleteButton = getLoc("deleteEntryButton");
 
@@ -107,8 +107,8 @@ int main(int argc, char** argv)
 
             case NEW_LIST_DELETE_EVENT:
                     {
-                        hipe_loc deleteLocButton = getLoc("entryDiv");
-                        hipe_send(session, HIPE_OP_DELETE, 0, deleteLocButton, 2, "button", "deletedeleteButton");
+                        hipe_loc deleteLocDiv = getLoc("entryDiv");
+                        hipe_send(session, HIPE_OP_DELETE, 0, deleteLocDiv, 2, "button", "deletedeleteButton");
 
                         // no idea how to find the location of the text itself???
                         // hipe_loc textLoc = getLoc("hr");
