@@ -15,6 +15,7 @@
 #define NEW_LIST_ENTRY_INPUT 4
 #define NEW_LIST_DELETE_EVENT 5
 
+int counter = 1;
 
 hipe_session session;
 
@@ -40,6 +41,14 @@ void newListEntryInput(hipe_session session) {
         hipe_loc entryDivLoc = getLoc("entryDiv");
 
         hipe_send(session, HIPE_OP_APPEND_TAG, 0,entryDivLoc, 1, "hr");
+
+        char number[50];
+        sprintf(number, "%d", counter);
+        hipe_send(session, HIPE_OP_APPEND_TEXT, 0,entryDivLoc, 2, number);
+        counter ++;
+        hipe_send(session, HIPE_OP_APPEND_TEXT, 0,entryDivLoc, 2, ".  ");
+
+
         hipe_send(session, HIPE_OP_APPEND_TEXT, 0,entryDivLoc, 2, listenForInput.arg[0]);
         hipe_send(session, HIPE_OP_APPEND_TAG, 0,entryDivLoc, 2, "button", "deleteEntryButton");
 
