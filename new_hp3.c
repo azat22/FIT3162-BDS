@@ -58,15 +58,12 @@ void newListEntryInput(hipe_session session) {
             hipe_loc entryDivLoc = getLoc(uniqueEntryDivID);
             hipe_send(session, HIPE_OP_APPEND_TAG, 0, entryDivLoc, 1, "hr");
             hipe_send(session, HIPE_OP_APPEND_TEXT, 0, entryDivLoc, 2, entryNumber);
-            hipe_send(session, HIPE_OP_APPEND_TEXT, 0, entryDivLoc, 2, ". ");
+            hipe_send(session, HIPE_OP_APPEND_TEXT, 0, entryDivLoc, 2, ".  ");
             hipe_send(session, HIPE_OP_APPEND_TEXT, 0, entryDivLoc, 2, listenForInput.arg[0]);
 
             // Create a unique ID for each button
             char* uniqueButtonID = concat("buttonID", entryNumber);
-            hipe_send(session, HIPE_OP_APPEND_TAG, 0, entryDivLoc, 3, "button", uniqueButtonID, uniqueEntryDivID);
-            
-            
-            
+            hipe_send(session, HIPE_OP_APPEND_TAG, 0, entryDivLoc, 2, "button", uniqueButtonID, uniqueEntryDivID);
             hipe_loc deleteButton = getLoc(uniqueButtonID);
             //add text to the buttons
             hipe_send(session, HIPE_OP_APPEND_TEXT, 0, deleteButton, 1, "Delete entry");
@@ -83,9 +80,20 @@ void deleteListEntry(hipe_session session) {
     hipe_instruction_init(&listenForDeleteEvent);
     
     if(hipe_await_instruction(session, &listenForDeleteEvent, HIPE_OP_EVENT) == 1) {
-        hipe_loc deleteLocDiv = listenForDeleteEvent.location - 1;
-        hipe_send(session, HIPE_OP_GET_ATTRIBUTE, 0, deleteLocDiv, 0);
+        hipe_loc deleteLocDiv = listenForDeleteEvent.location;
+
+        hipe_send(session, HIPE_OP_APPEND_TAG, 0, 0, 1, "h1", "some_id");
+        hipe_loc some_loc = getLoc("some_id");
+
+        char temp[50];
+        sprintf(temp, "%d", listenForDeleteEvent.arg[1]);
+
+        hipe_send(session, HIPE_OP_APPEND_TEXT, 0, some_loc, 1, temp);
+        
+        
+
         hipe_send(session, HIPE_OP_DELETE, 0, deleteLocDiv, 2, "button", "deletedeleteButton");
+        
     }
 }
 
@@ -156,5 +164,4 @@ int main(int argc, char** argv)
 
     return 0;
 }
-
 
