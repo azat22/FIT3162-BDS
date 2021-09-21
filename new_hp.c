@@ -41,7 +41,7 @@ void newListEntryInput(hipe_session session) {
     hipe_instruction_init(&listenForInput);
     
     if(hipe_await_instruction(session, &listenForInput, HIPE_OP_DIALOG_RETURN) == 1) {
-        if(listenForInput.arg[0] != '\0') {
+        if(&listenForInput.arg[0] != '\0') {
             // If the content of the user entry is not empty, then we add it to the list
             // div
             char entryNumber[50];
@@ -50,11 +50,14 @@ void newListEntryInput(hipe_session session) {
 
             hipe_send(session, HIPE_OP_APPEND_TAG, 0,0, 2, "div", uniqueEntryDivID);
             hipe_loc entryDivLoc = getLoc(uniqueEntryDivID);
-            hipe_send(session, HIPE_OP_APPEND_TAG, 0, entryDivLoc, 1, "hr");
-            hipe_send(session, HIPE_OP_APPEND_TEXT, 0, entryDivLoc, 2, entryNumber);
-            hipe_send(session, HIPE_OP_APPEND_TEXT, 0, entryDivLoc, 2, ". ");
+            
+            hipe_send(session, HIPE_OP_APPEND_TEXT, 0, entryDivLoc, 1, "- ");
+            // hipe_send(session, HIPE_OP_APPEND_TEXT, 0, entryDivLoc, 2, ". ");
             hipe_send(session, HIPE_OP_APPEND_TEXT, 0, entryDivLoc, 2, listenForInput.arg[0]);
-
+            hipe_send(session, HIPE_OP_SET_STYLE, 0, entryDivLoc, 2, "margin-top", "1em");
+            hipe_send(session, HIPE_OP_SET_STYLE, 0, entryDivLoc, 2, "margin-left", "0.5em");
+            hipe_send(session, HIPE_OP_SET_STYLE, 0, entryDivLoc, 2, "margin-right", "0.5em");
+            hipe_send(session, HIPE_OP_SET_STYLE, 0, entryDivLoc, 2, "margin-bottom", "1em");
 
 
             // Create a unique ID for each button
@@ -65,7 +68,12 @@ void newListEntryInput(hipe_session session) {
             
             hipe_loc deleteButton = getLoc(uniqueButtonID);
             //add text to the buttons
-            hipe_send(session, HIPE_OP_APPEND_TEXT, 0, deleteButton, 1, "Delete entry");
+            hipe_send(session, HIPE_OP_APPEND_TEXT, 0, deleteButton, 1, "Delete entry"); 
+            hipe_send(session, HIPE_OP_SET_STYLE, 0, deleteButton, 2, "font-family", "impact");
+            hipe_send(session, HIPE_OP_SET_STYLE, 0, deleteButton, 2, "float", "right");
+
+            hipe_send(session, HIPE_OP_APPEND_TAG, 0, entryDivLoc, 1, "hr");
+
             //requests events for these buttons (we designate requestor codes 1,2,3 to identify these quickly)
             hipe_send(session, HIPE_OP_EVENT_REQUEST, NEW_LIST_DELETE_EVENT, deleteButton, 2, "click", uniqueEntryDivID);
 
@@ -100,8 +108,18 @@ int main(int argc, char** argv)
     hipe_send(session, HIPE_OP_SET_STYLE, 0, main_page_title_loc, 2, "text-align", "center"); 
     hipe_send(session, HIPE_OP_SET_STYLE, 0, main_page_title_loc, 2, "font-family", "impact, sans-serif");
     hipe_send(session, HIPE_OP_SET_STYLE, 0, main_page_title_loc, 2, "margin-top", "0.5em");
-    hipe_send(session, HIPE_OP_SET_STYLE, 0, main_page_title_loc, 2, "margin-bottom", "0.1em");
+    hipe_send(session, HIPE_OP_SET_STYLE, 0, main_page_title_loc, 2, "margin-bottom", "0em");
     
+    hipe_send(session, HIPE_OP_APPEND_TAG, 0,0, 2, "h4", "main-page-subtitle");
+    hipe_loc main_page_subtitle_loc = getLoc("main-page-subtitle");
+    hipe_send(session, HIPE_OP_SET_TEXT, 0, main_page_subtitle_loc, 1, "Organise your life!");
+    hipe_send(session, HIPE_OP_SET_STYLE, 0, main_page_subtitle_loc, 2, "text-align", "center");
+    hipe_send(session, HIPE_OP_SET_STYLE, 0, main_page_subtitle_loc, 2, "font-style", "italic");
+    
+    hipe_send(session, HIPE_OP_ADD_STYLE_RULE, 0,0, 2, "button", "background-color: #e7e7e7; border-radius: 4px;"); 
+
+
+
     hipe_send(session, HIPE_OP_APPEND_TAG, 0,0, 1, "hr"); //horizontal line
     
     hipe_send(session, HIPE_OP_APPEND_TAG, 0,0, 2, "div", "newListEntryDialogButtonDiv");
