@@ -41,7 +41,7 @@ void newListEntryInput(hipe_session session) {
     hipe_instruction_init(&listenForInput);
     
     if(hipe_await_instruction(session, &listenForInput, HIPE_OP_DIALOG_RETURN) == 1) {
-        if(&listenForInput.arg[0] != '\0') {
+        if(listenForInput.arg[0] != '\0') {
             // If the content of the user entry is not empty, then we add it to the list
             // div
             char entryNumber[50];
@@ -51,20 +51,18 @@ void newListEntryInput(hipe_session session) {
             hipe_send(session, HIPE_OP_APPEND_TAG, 0,0, 2, "div", uniqueEntryDivID);
             hipe_loc entryDivLoc = getLoc(uniqueEntryDivID);
             
-            hipe_send(session, HIPE_OP_APPEND_TEXT, 0, entryDivLoc, 1, "- ");
+            hipe_send(session, HIPE_OP_APPEND_TEXT, 0, entryDivLoc, 1, "➼ ");
             // hipe_send(session, HIPE_OP_APPEND_TEXT, 0, entryDivLoc, 2, ". ");
+            
             hipe_send(session, HIPE_OP_APPEND_TEXT, 0, entryDivLoc, 2, listenForInput.arg[0]);
             hipe_send(session, HIPE_OP_SET_STYLE, 0, entryDivLoc, 2, "margin-top", "1em");
             hipe_send(session, HIPE_OP_SET_STYLE, 0, entryDivLoc, 2, "margin-left", "0.5em");
             hipe_send(session, HIPE_OP_SET_STYLE, 0, entryDivLoc, 2, "margin-right", "0.5em");
             hipe_send(session, HIPE_OP_SET_STYLE, 0, entryDivLoc, 2, "margin-bottom", "1em");
 
-
             // Create a unique ID for each button
             char* uniqueButtonID = concat("buttonID", entryNumber);
             hipe_send(session, HIPE_OP_APPEND_TAG, 0, entryDivLoc, 3, "button", uniqueButtonID, uniqueEntryDivID);
-            
-            
             
             hipe_loc deleteButton = getLoc(uniqueButtonID);
             //add text to the buttons
@@ -90,6 +88,12 @@ void deleteListEntry(hipe_session session) {
         hipe_loc deleteLocDiv = listenForDeleteEvent.location - 1;
         hipe_send(session, HIPE_OP_GET_ATTRIBUTE, 0, deleteLocDiv, 0);
         hipe_send(session, HIPE_OP_DELETE, 0, deleteLocDiv, 2, "button", "deletedeleteButton");
+
+        hipe_instruction getNoteContent;
+        hipe_instruction_init(&getNoteContent);
+        hipe_send(session, HIPE_OP_GET_CONTENT, 0,0,0);
+
+
     }
 }
 
@@ -116,7 +120,7 @@ int main(int argc, char** argv)
     hipe_send(session, HIPE_OP_SET_STYLE, 0, main_page_subtitle_loc, 2, "text-align", "center");
     hipe_send(session, HIPE_OP_SET_STYLE, 0, main_page_subtitle_loc, 2, "font-style", "italic");
     
-    hipe_send(session, HIPE_OP_ADD_STYLE_RULE, 0,0, 2, "button", "background-color: #e7e7e7; border-radius: 4px;"); 
+    hipe_send(session, HIPE_OP_ADD_STYLE_RULE, 0,0, 2, "button", "background-color: #e7e7e7; border-radius: 8px;"); 
 
 
 
