@@ -17,6 +17,6 @@ All documentation is contained within the *docs* folder. We have subdivided the 
 We have tried, as much as possible, to make a detailed and complete guide to using Hipe to create your own desktop applications and interfaces. The guide provided is intended to make it easier for developers to understand how Hipe works, common functions that will be used, how the HTML/CSS to Hipe code mapping works, as well as general guidance to make using Hipe a more pleasant experience. 
 
 # TL;DR
-We hope you learn something from our project. We recommend starting [here](docs/start_here.md)
+We hope you learn something from our project. We recommend starting [here](docs/start_here.md).
 
 
