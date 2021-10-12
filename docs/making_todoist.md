@@ -519,17 +519,241 @@ void editListEntry(hipe_session session)
 ```
 Notice that we send a HIPE_OP_GET_CONTENT instruction to the server. This instruction requests the contents of the specified hipe_loc to be sent back to the session. In this case, this content is the text for that entry. We listen for a HIPE_OP_CONTENT_RETURN to fetch the content of the DIV. Using the text we received, we call an auxiliary function editListEntryDialog(), passing this text over to it. 
 
+In that function, the user will be prompted with a dialog input box, where they can edit the text that they have entered. 
+
+We will then listen for a HIPE_OP_DIALOG_RETURN, to fetch the user input, and update the text in that entry. We also update the listEntries array.
+
 
 # editListEntryDialog()
+This function sends a HIPE_OP_DIALOG_INPUT instruction to the server, passing it the current text, so the user can edit it.
 
-
+```
+// This function is called when edit button is pressed - opens a dialog box, 
+// sending it the current text which is in the entry
+void editListEntryDialog(hipe_session session, char* text) 
+{
+    hipe_send(session, HIPE_OP_DIALOG_INPUT, 0,0, 4, "Edit note", "Start writing below: ", text);
+}
+```
 
 # exportToFile()
+This function will be called when the user clicks the 'Export' button. It will create a file called 'output_list.txt', and it'll save all the current entries to the file. 
 
-
+```
+// Function to export list entries to file
+void exportToFile() 
+{
+    FILE* fileID;
+    fileID = fopen("output_list.txt", "w");
+    for(int i = 0; i < MAX_NUM_ENTRIES_IN_FILE; i++) 
+    {
+        if (listEntries[i] != "\0") {
+            fprintf(fileID, "%s\n", listEntries[i]); 
+        }
+    }
+     fclose(fileID);
+     displaySimpleDialog("Success message", "Exported to file successfully.");
+}
+```
+We use simple C code to write to file. At the end, we call the displaySimepleDialog() function to show a simple dialog message informing the user that the file was saved to file successfully. 
 
 
 # loadFromFile()
 
+This function will be called when the user clicks the 'Load' button. It will load all the entries from the saved file (if it exists), and display them to the screen in the normal format, with one line of file corresponding to one entry in the list. 
 
+The code is as follows: 
 
+```
+// Function to load a saved list from a file
+void loadFromFile(hipe_session session) 
+{
+    // If user has loaded from file already, display error message, and return
+    if(loaded_already == true)
+    {
+        displaySimpleDialog("Failure message", "Loaded from file already, please restart to load again.");
+        return;
+    }
+    // Create a new file object
+    FILE* fileID;
+    fileID = fopen("output_list.txt","r");
+    int errnum;
+
+    // Error handling, check if file exists
+    // If not, display appropriate message, and print the error logs
+    if (fileID == NULL) 
+    {
+        errnum = errno;
+        fprintf(stderr, "Value of errno: %d\n", errno);
+        perror("Error printed by perror");
+        fprintf(stderr, "Error opening file: %s\n", strerror( errnum ));
+        displaySimpleDialog("Failure message", "Failed load file, check terminal log for details.");
+        return;
+    }
+    // If file exists, we start to read from it 
+    // Read from the file line by line
+    else 
+    {
+        char* buffer = NULL;
+        size_t len;
+        ssize_t bytes_read = getdelim( &buffer, &len, '\0', fileID);
+        int num_items_loaded = 0;
+        if ( bytes_read != -1) {
+            clearEntriesList();
+            char* delim = "\n";
+            char* ptr = strtok(buffer, delim);
+            int counter = 8;
+            while(ptr != NULL)
+            {
+                // While we haven't exceeded the maximum number of entries
+                if (counter < MAX_NUM_ENTRIES_IN_FILE) 
+                {
+                    // Save the entry to the array
+                    listEntries[counter] = ptr;
+                    ptr = strtok(NULL, delim);
+                    counter += 4;
+                }
+            }
+            // Now, for each entry loaded, we will create the DIVs and display the entry
+            // Same as we do for when the user creates a new entry manually
+            for(int i = 0; i < MAX_NUM_ENTRIES_IN_FILE; i++) 
+            {
+                if(listEntries[i] != "\0" && loaded_already == false) 
+                {
+                    num_items_loaded++;
+                    char entryNumber[50];
+                    sprintf(entryNumber, "%d", counter);
+                    char* uniqueEntryDivID = concat("entryDivID", entryNumber); 
+                    hipe_send(session, HIPE_OP_APPEND_TAG, 0, 0, 2, "div", uniqueEntryDivID);
+                    hipe_loc entryDivLoc = getLoc(uniqueEntryDivID);
+                    
+                    // Adding an 'arrow' symbol to the div, as a stylistic representation of a list entry
+                    hipe_send(session, HIPE_OP_APPEND_TEXT, 0, entryDivLoc, 1, 	"➼ ");
+                    
+                    // Create a paragraph tag, giving it a unique ID, and appending it to the div
+                    char* uniqueTextID = concat("textID", entryNumber);
+                    hipe_send(session, HIPE_OP_APPEND_TAG, 0, entryDivLoc, 2, "p", uniqueTextID);
+                    hipe_loc p_loc = getLoc(uniqueTextID);  // Get its location 
+
+                    // Center the paragraph tag using CSS, accessed via its hipe_location
+                    hipe_send(session, HIPE_OP_SET_STYLE, 0, p_loc, 2, "display", "inline");
+                    // Populate the p tag with the text received from the user input
+                    hipe_send(session, HIPE_OP_APPEND_TEXT, 0, p_loc, 1, listEntries[i]);
+                    
+                    // Applying some CSS style rules to the div, giving it margins in all 
+                    // four directions to space it correctly.
+                    hipe_send(session, HIPE_OP_SET_STYLE, 0, entryDivLoc, 2, "margin-top", "1em");
+                    hipe_send(session, HIPE_OP_SET_STYLE, 0, entryDivLoc, 2, "margin-left", "0.5em");
+                    hipe_send(session, HIPE_OP_SET_STYLE, 0, entryDivLoc, 2, "margin-right", "0.5em");
+                    hipe_send(session, HIPE_OP_SET_STYLE, 0, entryDivLoc, 2, "margin-bottom", "1em");
+
+                    // Create a unique ID for each delete button
+                    char* uniqueDeleteButtonID = concat("deleteButtonID", entryNumber);
+                    // Adding the delete button to the DIV
+                    hipe_send(session, HIPE_OP_APPEND_TAG, 0, entryDivLoc, 3, "button", uniqueDeleteButtonID, uniqueEntryDivID);
+                    hipe_loc deleteButton = getLoc(uniqueDeleteButtonID);
+                    // Add text and styling to the delete button
+                    hipe_send(session, HIPE_OP_APPEND_TEXT, 0, deleteButton, 1, "Delete entry"); 
+                    hipe_send(session, HIPE_OP_SET_STYLE, 0, deleteButton, 2, "font-family", "impact");
+                    hipe_send(session, HIPE_OP_SET_STYLE, 0, deleteButton, 2, "float", "right");
+
+                    // Create a unique ID for each edit button
+                    char* uniqueEditButtonID = concat("editButtonID", entryNumber);
+                    // Adding the edit button to the DIV
+                    hipe_send(session, HIPE_OP_APPEND_TAG, 0, entryDivLoc, 3, "button", uniqueEditButtonID, uniqueEntryDivID);
+                    hipe_loc editButton = getLoc(uniqueEditButtonID);
+                    // Add text and styling to the edit button
+                    hipe_send(session, HIPE_OP_APPEND_TEXT, 0, editButton, 1, "Edit entry"); 
+                    hipe_send(session, HIPE_OP_SET_STYLE, 0, editButton, 2, "font-family", "impact");
+                    hipe_send(session, HIPE_OP_SET_STYLE, 0, editButton, 2, "float", "right");
+
+                    // Add a horizontal line - acts as a separator between the entries
+                    hipe_send(session, HIPE_OP_APPEND_TAG, 0, entryDivLoc, 1, "hr");
+
+                    //requests events for these buttons (delete, edit)
+                    hipe_send(session, HIPE_OP_EVENT_REQUEST, NEW_LIST_DELETE_EVENT, deleteButton, 2, "click", uniqueEntryDivID);
+                    hipe_send(session, HIPE_OP_EVENT_REQUEST, NEW_LIST_EDIT_EVENT, editButton, 2, "click", uniqueEntryDivID);
+                    counter++; // increment the global counter since we have added an entry
+                }
+            }
+            loaded_already = true;
+        }
+        // Display a message to inform the user that the entries have been loaded from file
+        
+        if (num_items_loaded > 0)
+        {
+            displaySimpleDialog("Success message", "Loaded from file successfully.");
+        }
+        else
+        {
+            displaySimpleDialog("Empty file message", "File is empty, no entries loaded.");
+        }
+    }
+}
+```
+
+We will allow the user to load from file once per session, to prevent errors. We use a global variable called loaded_already to check if the user has already loaded from file or not. If yes, we display a message to inform the user that they need to restart the app if they'd like to load again.
+
+```
+// If user has loaded from file already, display error message, and return
+    if(loaded_already == true)
+    {
+        displaySimpleDialog("Failure message", "Loaded from file already, please restart to load again.");
+        return;
+    }
+```
+
+The next part is the error handling. We try to open the file, and if there is any error here, such as 'file not found' errors, we will handle it, and display appropriate message to the user. The error message will be logged to the terminal.
+
+```
+// Create a new file object
+    FILE* fileID;
+    fileID = fopen("output_list.txt","r");
+    int errnum;
+
+    // Error handling, check if file exists
+    // If not, display appropriate message, and print the error logs
+    if (fileID == NULL) 
+    {
+        errnum = errno;
+        fprintf(stderr, "Value of errno: %d\n", errno);
+        perror("Error printed by perror");
+        fprintf(stderr, "Error opening file: %s\n", strerror( errnum ));
+        displaySimpleDialog("Failure message", "Failed load file, check terminal log for details.");
+        return;
+    }
+```
+
+If the file exists, then we read it line by line, and store it in the listEntries array. This reading is done using C code, it's a standard format. We use 'counter' to store the index at which we want to save the element in the listEntries array. This is because we want the element to be stored in the same index in the array, as the DIV's location for that entry. This makes it easy to then add the DIVs using the index. This means that our array will have gaps in it, however this is not a big deal.
+
+```
+// If file exists, we start to read from it 
+    // Read from the file line by line
+    else 
+    {
+        char* buffer = NULL;
+        size_t len;
+        ssize_t bytes_read = getdelim( &buffer, &len, '\0', fileID);
+        int num_items_loaded = 0;
+        if ( bytes_read != -1) {
+            clearEntriesList();
+            char* delim = "\n";
+            char* ptr = strtok(buffer, delim);
+            int counter = 8;
+            while(ptr != NULL)
+            {
+                // While we haven't exceeded the maximum number of entries
+                if (counter < MAX_NUM_ENTRIES_IN_FILE) 
+                {
+                    // Save the entry to the array
+                    listEntries[counter] = ptr;
+                    ptr = strtok(NULL, delim);
+                    counter += 4;
+                }
+            }
+```
+
+At this point, we have all the entries we want, loaded into our array in listEntries. We then loop over the array, and for each entry, we will go through the same process we went when adding a new entry by the user, i.e. we'll create the DIVs and the buttons and populate them accordingly. 
+
+# THE END
+And that's it! Congratulations, you have successfully created your first Hipe application. We hope that you enjoyed working through this guide, and that you learned about Hipe in the process. Please check out our Hipe documentation if you'd like more specific information about Hipe functions and usage. 
