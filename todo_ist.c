@@ -69,6 +69,12 @@ hipe_loc getLoc(char* id)
     return instruction.location;
 }
 
+// Function to display a simple dialog box with some information
+void displaySimpleDialog(char* title, char* dialogText) 
+{
+    hipe_send(session, HIPE_OP_DIALOG, 0, 0, 2, title, dialogText);
+}
+
 // Create a new entry in the list by calling HIPE_OP_DIALOG_INPUT
 void newListEntryDialog() 
 {
@@ -202,12 +208,6 @@ void editListEntry(hipe_session session)
             }
         }
     }
-}
-
-// Function to display a simple dialog box with some information
-void displaySimpleDialog(char* title, char* dialogText) 
-{
-    hipe_send(session, HIPE_OP_DIALOG, 0,0, 2, title, dialogText);
 }
 
 // Function to export list entries to file
